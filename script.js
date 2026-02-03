@@ -12,6 +12,11 @@ const dueDateInput = document.getElementById("dueDate");
 
 const themeToggle = document.getElementById("themeToggle");
 
+const toast = document.getElementById("toast");
+
+const searchInput = document.getElementById("searchInput");
+
+
 
 // Load tasks when page opens
 window.onload = function () {
@@ -43,7 +48,9 @@ dueText.textContent = dueDateInput.value
     li.classList.add(prioritySelect.value);
 
     if (dueDateInput.value) {
-    li.setAttribute("data-due", dueDateInput.value);
+    li.setAttribute("data-due", dueDateInput.value)
+    sortTasks();
+
 }
 
 
@@ -57,7 +64,12 @@ dueText.textContent = dueDateInput.value
         li.classList.toggle("completed");
         saveTasks();
         updateCounter();
+        updateProgress();
+
+        sortTasks();
+
     });
+
 
     // Delete button
     let delBtn = document.createElement("button");
@@ -68,6 +80,10 @@ dueText.textContent = dueDateInput.value
         li.remove();
         saveTasks();
         updateCounter();
+        updateProgress();
+
+        showToast("Task added ✅");
+
     });
 
     li.appendChild(taskText);
@@ -82,8 +98,26 @@ li.appendChild(delBtn);
     prioritySelect.value = "low";
     saveTasks();
     updateCounter();
-    checkExpiredTasks();
+    updateProgress();
+
+    //checkExpiredTasks();
+    showToast("Task deleted ❌");
+
+
+
 });
+
+function updateProgress() {
+    let total = taskList.children.length;
+    let completed = taskList.querySelectorAll(".completed").length;
+
+    let percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+    document.getElementById("progress").style.width = percent + "%";
+    document.getElementById("progressText").textContent =
+        percent + "% tasks completed";
+}
+
 
 
 // Save tasks to localStorage
@@ -148,3 +182,89 @@ themeToggle.addEventListener("click", function () {
         themeToggle.textContent = "🌙 Dark Mode";
     }
 });
+
+//const toast = document.getElementById("toast");
+
+function showToast(message) {
+    toast.textContent = message;
+    toast.style.opacity = "1";
+
+    setTimeout(() => {
+        toast.style.opacity = "0";
+    }, 2000);
+}
+
+taskInput.addEventListener("keydown", function (e) {
+
+    // Enter → add task
+    if (e.key === "Enter") {
+        addBtn.click();
+    }
+
+    // Esc → clear input
+    if (e.key === "Escape") {
+        taskInput.value = "";
+    }
+});
+
+function sortTasks() {
+    let tasks = Array.from(taskList.children);
+
+    tasks.sort((a, b) => {
+
+        // completed neeche
+        if (a.classList.contains("completed")) return 1;
+        if (b.classList.contains("completed")) return -1;
+
+        const priorityOrder = { high: 1, medium: 2, low: 3 };
+
+        return priorityOrder[a.classList[0]] - priorityOrder[b.classList[0]];
+    });
+
+    tasks.forEach(task => taskList.appendChild(task));
+}
+
+window.onload = function () {
+    loadTasks();
+    updateCounter();
+    checkExpiredTasks();
+    sortTasks();
+};
+
+//const searchInput = document.getElementById("searchInput");
+
+searchInput.addEventListener("input", function () {
+    let searchText = searchInput.value.toLowerCase();
+    let tasks = document.querySelectorAll("#taskList li");
+
+    tasks.forEach(task => {
+        let text = task.firstChild.textContent.toLowerCase();
+
+        if (text.includes(searchText)) {
+            task.style.display = "flex";
+
+            if (searchText !== "") {
+                let originalText = task.firstChild.textContent;
+                let regex = new RegExp(`(${searchText})`, "gi");
+                task.firstChild.innerHTML = originalText.replace(
+                    regex,
+                    `<span class="highlight">$1</span>`
+                );
+            }
+        } else {
+            task.style.display = "none";
+        }
+
+        if (searchText === "") {
+            task.firstChild.innerHTML = task.firstChild.textContent;
+        }
+    });
+});
+
+window.onload = function () {
+    loadTasks();
+    updateCounter();
+    updateProgress();
+    checkExpiredTasks();
+    sortTasks();
+};
